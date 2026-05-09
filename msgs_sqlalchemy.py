@@ -1,5 +1,5 @@
-from sqlalchemy import create_engine , ForeignKey , String , Integer , delete 
-from sqlalchemy.orm import DeclarativeBase , Mapped , mapped_column , relationship , Session , sessionmaker
+from sqlalchemy import ForeignKey , String , Integer , delete , create_engine
+from sqlalchemy.orm import DeclarativeBase , Mapped , mapped_column , relationship , sessionmaker , Session
 from pydantic import BaseModel , Field , ConfigDict
 from typing import Annotated
 engine = create_engine("postgresql+psycopg2://matan:matan123@localhost:5432/backend_stuff")
