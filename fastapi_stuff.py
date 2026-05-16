@@ -80,16 +80,16 @@ async def websocket_server(websocket : WebSocket) -> None:
                 await websocket.send_text(f'somethings wrong {error}')
             except ValidationError:
                 await websocket.send_text(f'the msg you sent was too long only 50 chars')
-        while True:
-         msg_notdb = await websocket.receive_text()
-         if len(msg_notdb) > 50:
-             await websocket.send_text("msg too long (max 50)")
-             continue
-         async with async_session() as session:
-             new_msg = Messages(user_id=current_user.id , msg=msg_notdb)
-             session.add(new_msg)
-             await session.commit()
-         await manager.broadcast(f'{username}: {msg_notdb}')
+         while True:
+             msg_notdb = await websocket.receive_text()
+             if len(msg_notdb) > 50:
+                 await websocket.send_text("msg too long (max 50)")
+                 continue
+             async with async_session() as session:
+                 new_msg = Messages(user_id=current_user.id , msg=msg_notdb)
+                 session.add(new_msg)
+                 await session.commit()
+             await manager.broadcast(f'{username}: {msg_notdb}')
     except WebSocketDisconnect:
         if username:
             manager.disconnect(username)
