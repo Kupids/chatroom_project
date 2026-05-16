@@ -35,6 +35,20 @@ class ConnectionManager:
 #giving a var to the class
 manager = ConnectionManager
 
+def auth_stuff(auth : Auth , session : async_session)->:
+    username_notdb = auth.username
+    password_notdb = auth.password
+    check_username = await session.execute(User).where(User.username == username_notdb)
+    user = result.scalar().first()
+    if user is None:
+        new_user = User(username=username_notdb , password=password_notdb)
+        await session.add(new_user)
+        return (f'account created : {username_notdb}:{password_notdb}')
+    if user.password == password_notdb:
+        return (f'connected')
+    else:
+        raise ValueError('wrong password')
+    
 @app.websocket("/ws")
 async def websocket_server(websocket : WebSocket , db : AsyncSession = Depends(generate_db)) -> None:
     manager.connect(websocket)
