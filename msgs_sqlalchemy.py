@@ -33,7 +33,13 @@ class auth(BaseModel):
     username : str = Field(max_length=10)
 
     password : str = Field(max_length=10)
-
+    
+    @classmethod
+    def get_string(cls , auth_string : str) -> str:
+        if ":" not in auth_string:
+            raise ValueError("type it as username:password")
+        username , password = auth_string.split(":" , 1)
+        return cls(username = username.strip() , password = password.strip())
 class msg(BaseModel):
     username : str = Field(max_length=10)
     msg : str = Field(max_length=50)
