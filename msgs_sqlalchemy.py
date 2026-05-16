@@ -29,7 +29,7 @@ class Messages(Base):
 
     msg_date : Mapped[str] = mapped_column() 
 
-class auth(BaseModel):
+class Auth(BaseModel):
     username : str = Field(max_length=10)
 
     password : str = Field(max_length=10)

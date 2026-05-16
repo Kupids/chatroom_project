@@ -2,6 +2,7 @@ from fastapi import Depends , WebSocket , WebSocketDissconect
 from sqlalchemy.ext.asyncio import AsyncSession , create_async_engine
 from sqlalchemy.orm import sessionmaker
 from msgs_sqlalchemy import Auth
+from pydantic import ValidationError
 engine = create_async_engine("postgresql+asyncpg:://matan:matan123@localhost:5432/backend_stuff")
 async_session = sessionmaker(engine , class_=AsyncSession , expire_on_commit=False)
 
@@ -65,10 +66,14 @@ async def websocket_server(websocket : WebSocket , db : AsyncSession = Depends(g
             username = auth_data.username
             manager.connect(username , websocket)
             break
+    except ValueError as error:
+        await websocket.send_text(f'somethings wrong {error}')
+    except ValidationError:
+        await websocket.send_text(f'the msg you sent was too long only 50 chars')
         while True:
             msg = await websocket.receive_text()
             async with AsyncSession as session
-                statement = insert(messages).values(username=auth_data.username,Messages=msg)
+                statement = insert(Messages).values(user_id = (User.id).where(User.username == auth_data.username),Messages=msg)
                 result = await session.execute(statement)
             websocket.broadcast(msg)
         except WebSocketDisconnect:
