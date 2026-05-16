@@ -18,10 +18,10 @@ class ConnectionManager:
     async def first_entry(self , websocket : WebSocket) -> None:
         await websocket.accept()
 
-    async def connect(self , username = str , websocket : WebSocket) -> None:
+    async def connect(self , username : str , websocket : WebSocket) -> None:
         self.active_connections[username] = websocket
     
-    def disconnect(self , username : str , websocket : WebSocket) -> None:
+    def disconnect(self , username : str) -> None:
         if username in self.active_connections:
             del self.active_connections[username]
 
@@ -40,7 +40,7 @@ async def auth_stuff(auth : Auth , session : AsyncSession) -> tuple[str,User]:
     password_notdb = auth.password
     statement = select(User).where(User.username == username_notdb)
     result = await session.execute(statement)
-    user = result.scalar().first()
+    user = result.scalars().first()
 
     if user is None:
         new_user = User(username=username_notdb , password=password_notdb)
