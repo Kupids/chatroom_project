@@ -8,12 +8,6 @@ from typing import Dict
 engine = create_async_engine("postgresql+asyncpg:://matan:matan123@localhost:5432/backend_stuff")
 async_session = sessionmaker(engine , class_=AsyncSession , expire_on_commit=False)
 
-#here we create the dependency for the websocket request to yeild a new db
-# connection everytime
-async def generate_db() -> AsyncGenerator[AsyncSession , None]:
-    async with async_session() as session:
-        yield session
-
 # this is the code for the actual connection to the "chat room".
 #in this class we just keep track on who is connected , theres a method for
 #connect , disconnect , and to broadcast msgs to everyone
@@ -47,7 +41,8 @@ async def auth_stuff(auth : Auth , session : async_session)->:
     user = result.scalar().first()
     if user is None:
         new_user = User(username=username_notdb , password=password_notdb)
-        await session.add(new_user)
+        session.add(new_user)
+        await session.commit()
         return (f'account created : {username_notdb}:{password_notdb}')
     if user.password == password_notdb:
         return (f'connected')
@@ -55,7 +50,7 @@ async def auth_stuff(auth : Auth , session : async_session)->:
         raise ValueError('wrong password')
     
 @app.websocket("/ws")
-async def websocket_server(websocket : WebSocket , db : AsyncSession = Depends(generate_db)) -> None:
+async def websocket_server(websocket : WebSocket) -> None:
     manager.first_entry(websocket)
     await websocket.accept()
     try:
@@ -64,24 +59,30 @@ async def websocket_server(websocket : WebSocket , db : AsyncSession = Depends(g
             auth_msg = await websocket.receive_text()
             auth_data = Auth.get_string(auth_msg)
 
-            async with AsyncSession as session:
+            async with async_session() as session:
                 checking = await auth_stuff(auth_data , session)
 
             username = auth_data.username
-            manager.connect(username , websocket)
+            if username in manager.active_connections:
+                await websocket.send_text("user logged in from somewhere else")
+                await websocket.close()
+                return
+            await manager.connect(username , websocket)
             break
-    except ValueError as error:
-        await websocket.send_text(f'somethings wrong {error}')
-    except ValidationError:
-        await websocket.send_text(f'the msg you sent was too long only 50 chars')
-        while True:
-            msg = await websocket.receive_text()
-            async with AsyncSession as session
-                statement = insert(Messages).values(user_id = (User.id).where(User.username == auth_data.username),Messages=msg)
-                result = await session.execute(statement)
-            websocket.broadcast(msg)
-        except WebSocketDisconnect:
-            print('someone dced')
-
-            await manager.broadcast(f'{username}: {msg}')
-
+        except ValueError as error:
+            await websocket.send_text(f'somethings wrong {error}')
+        except ValidationError:
+            await websocket.send_text(f'the msg you sent was too long only 50 chars')
+       while True:
+        msg_notdb = await websocket.receive_text()
+        if len(msg_notdb) > 50:
+            await websocket.send_text("msg too long (max 50)")
+            continue
+        async with async_session() as session:
+            new_msg = Messages(user_id=checking.id , msg=msg_notdb)
+            session.add(new_msg)
+            await session.commit()
+    except WebSocketDisconnect:
+        if username:
+            manager.disconnect(username)
+            await manager.broadcast(f'{username} left')
