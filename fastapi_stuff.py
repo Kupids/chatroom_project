@@ -1,8 +1,10 @@
-from fastapi import Depends , WebSocket , WebSocketDissconect
+from fastapi import Depends , WebSocket , WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession , create_async_engine
 from sqlalchemy.orm import sessionmaker
-from msgs_sqlalchemy import Auth
+from sqlalchemy import select
+from msgs_sqlalchemy import Auth , User , Messages
 from pydantic import ValidationError
+from typing import Dict
 engine = create_async_engine("postgresql+asyncpg:://matan:matan123@localhost:5432/backend_stuff")
 async_session = sessionmaker(engine , class_=AsyncSession , expire_on_commit=False)
 
@@ -31,10 +33,12 @@ class ConnectionManager:
 
     async def broadcast(self , message : str) -> None:
         for connection in self.active_connections.values():
-            await connection.send_text(message)
-
+            try:
+                await connection.send_text(message)
+            except Exception:
+                pass
 #giving a var to the class
-manager = ConnectionManager
+manager = ConnectionManager()
 
 async def auth_stuff(auth : Auth , session : async_session)->:
     username_notdb = auth.username
