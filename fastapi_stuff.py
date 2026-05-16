@@ -1,4 +1,4 @@
-from fastapi import Depends , WebSocket , WebSocketDisconnect
+from fastapi import FastAPI , Depends , WebSocket , WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession , create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select
@@ -32,56 +32,64 @@ class ConnectionManager:
             except Exception:
                 pass
 #giving a var to the class
+app = FastAPI()
 manager = ConnectionManager()
 
-async def auth_stuff(auth : Auth , session : async_session)->:
+async def auth_stuff(auth : Auth , session : AsyncSession) -> tuple[str,User]:
     username_notdb = auth.username
     password_notdb = auth.password
-    check_username = await session.execute(User).where(User.username == username_notdb)
+    statement = select(User).where(User.username == username_notdb)
+    result = await session.execute(statement)
     user = result.scalar().first()
+
     if user is None:
         new_user = User(username=username_notdb , password=password_notdb)
         session.add(new_user)
         await session.commit()
-        return (f'account created : {username_notdb}:{password_notdb}')
+        await session.refresh(new_user)
+        return f'account created : {username_notdb}:{password_notdb}' , new_user
     if user.password == password_notdb:
-        return (f'connected')
+        return f'connected' , user
     else:
         raise ValueError('wrong password')
     
 @app.websocket("/ws")
 async def websocket_server(websocket : WebSocket) -> None:
-    manager.first_entry(websocket)
-    await websocket.accept()
+    await manager.first_entry(websocket)
+    username = None
+    current_user = None
     try:
         while True:
             await websocket.send_text("enter your username/password in this format: 'username:password")
             auth_msg = await websocket.receive_text()
-            auth_data = Auth.get_string(auth_msg)
+            try:
+                auth_data = Auth.get_string(auth_msg)
 
-            async with async_session() as session:
-                checking = await auth_stuff(auth_data , session)
+                async with async_session() as session:
+                   status_text , current_user = await auth_stuff(auth_data , session)
 
-            username = auth_data.username
-            if username in manager.active_connections:
-                await websocket.send_text("user logged in from somewhere else")
-                await websocket.close()
-                return
-            await manager.connect(username , websocket)
-            break
-        except ValueError as error:
-            await websocket.send_text(f'somethings wrong {error}')
-        except ValidationError:
-            await websocket.send_text(f'the msg you sent was too long only 50 chars')
-       while True:
-        msg_notdb = await websocket.receive_text()
-        if len(msg_notdb) > 50:
-            await websocket.send_text("msg too long (max 50)")
-            continue
-        async with async_session() as session:
-            new_msg = Messages(user_id=checking.id , msg=msg_notdb)
-            session.add(new_msg)
-            await session.commit()
+                username = auth_data.username
+                if username in manager.active_connections:
+                    await websocket.send_text("user logged in from somewhere else")
+                    await websocket.close()
+                    return
+                await manager.connect(username , websocket)
+                await websocket.send_text(status_text)
+                break
+            except ValueError as error:
+                await websocket.send_text(f'somethings wrong {error}')
+            except ValidationError:
+                await websocket.send_text(f'the msg you sent was too long only 50 chars')
+        while True:
+         msg_notdb = await websocket.receive_text()
+         if len(msg_notdb) > 50:
+             await websocket.send_text("msg too long (max 50)")
+             continue
+         async with async_session() as session:
+             new_msg = Messages(user_id=current_user.id , msg=msg_notdb)
+             session.add(new_msg)
+             await session.commit()
+         await manager.broadcast(f'{username}: {msg_notdb}')
     except WebSocketDisconnect:
         if username:
             manager.disconnect(username)
