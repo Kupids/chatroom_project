@@ -1,7 +1,7 @@
 from fastapi import Depends , WebSocket , WebSocketDissconect
 from sqlalchemy.ext.asyncio import AsyncSession , create_async_engine
 from sqlalchemy.orm import sessionmaker
-
+from msgs_sqlalchemy import Auth
 engine = create_async_engine("postgresql+asyncpg:://matan:matan123@localhost:5432/backend_stuff")
 async_session = sessionmaker(engine , class_=AsyncSession , expire_on_commit=False)
 
@@ -35,7 +35,7 @@ class ConnectionManager:
 #giving a var to the class
 manager = ConnectionManager
 
-def auth_stuff(auth : Auth , session : async_session)->:
+async def auth_stuff(auth : Auth , session : async_session)->:
     username_notdb = auth.username
     password_notdb = auth.password
     check_username = await session.execute(User).where(User.username == username_notdb)
@@ -51,16 +51,28 @@ def auth_stuff(auth : Auth , session : async_session)->:
     
 @app.websocket("/ws")
 async def websocket_server(websocket : WebSocket , db : AsyncSession = Depends(generate_db)) -> None:
-    manager.connect(websocket)
+    manager.first_entry(websocket)
     await websocket.accept()
     try:
         while True:
-            msg = await websocket.receive_text() 
-            with AsyncSession as session:
-                statement = insert(messages).values(username=(idfkyetbro),Messages=msg)
+            await websocket.send_text("enter your username/password in this format: 'username:password")
+            auth_msg = await websocket.receive_text()
+            auth_data = Auth.get_string(auth_msg)
+
+            async with AsyncSession as session:
+                checking = await auth_stuff(auth_data , session)
+
+            username = auth_data.username
+            manager.connect(username , websocket)
+            break
+        while True:
+            msg = await websocket.receive_text()
+            async with AsyncSession as session
+                statement = insert(messages).values(username=auth_data.username,Messages=msg)
                 result = await session.execute(statement)
             websocket.broadcast(msg)
         except WebSocketDisconnect:
             print('someone dced')
 
+            await manager.broadcast(f'{username}: {msg}')
 
