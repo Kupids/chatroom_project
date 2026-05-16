@@ -16,17 +16,20 @@ async def generate_db() -> AsyncGenerator[AsyncSession , None]:
 #connect , disconnect , and to broadcast msgs to everyone
 class ConnectionManager:
     def __init__(self):
-        self.active_connections : list[WebSocket] = []
-
-    async def connect(self , websocket : WebSocket) -> None:
-        await websocket.accept()
-        self.active_connections.append(websocket)
+        self.active_connections : Dict[str , WebSocket] = {}
     
-    def disconnect(self , websocket : WebSocket) -> None:
-        self.active_connections.remove(websocket)
+    async def first_entry(self , websocket : WebSocket) -> None:
+        await websocket.accept()
+
+    async def connect(self , username = str , websocket : WebSocket) -> None:
+        self.active_connections[username] = websocket
+    
+    def disconnect(self , username : str , websocket : WebSocket) -> None:
+        if username in self.active_connections:
+            del self.active_connections[username]
 
     async def broadcast(self , message : str) -> None:
-        for connection in self.active_connections:
+        for connection in self.active_connections.values():
             await connection.send_text(message)
 
 #giving a var to the class
