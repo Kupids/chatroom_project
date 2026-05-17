@@ -1,5 +1,4 @@
 import asyncio
-import sys
 import websockets
 
 async def get_msg(websocket) -> None:

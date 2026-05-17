@@ -60,7 +60,7 @@ async def websocket_server(websocket : WebSocket) -> None:
     current_user = None
     try:
         while True:
-            await websocket.send_text("enter your username/password in this format: 'username:password")
+            await websocket.send_text("Authentication proccess")
             auth_msg = await websocket.receive_text()
             try:
                 auth_data = Auth.get_string(auth_msg)
