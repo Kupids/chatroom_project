@@ -5,7 +5,7 @@ from sqlalchemy import select
 from msgs_sqlalchemy import Auth , User , Messages
 from pydantic import ValidationError
 from typing import Dict
-engine = create_async_engine("postgresql+asyncpg:://matan:matan123@localhost:5432/backend_stuff")
+engine = create_async_engine(async_engine)
 async_session = sessionmaker(engine , class_=AsyncSession , expire_on_commit=False)
 
 # this is the code for the actual connection to the "chat room".
