@@ -2,6 +2,7 @@ from sqlalchemy import ForeignKey , String , Integer , delete , create_engine
 from sqlalchemy.orm import DeclarativeBase , Mapped , mapped_column , relationship , sessionmaker , Session
 from pydantic import BaseModel , Field , ConfigDict
 from typing import Annotated
+from datetime import datetime
 engine = create_engine("postgresql+psycopg2://matan:matan123@localhost:5432/backend_stuff")
 Session = sessionmaker(bind = engine)
 
@@ -17,8 +18,8 @@ class User(Base):
 
     password : Mapped[str] = mapped_column(String(10) , nullable = False)
 
-    user_relation : Mapped[list['msgs']] = relationship(back_populates = 
-    'msg_relation')
+    messages_relation : Mapped[list['Messages']] = relationship(back_populates = 
+    'user_relation')
 class Messages(Base):
     __tablename__ = 'Messages'
 
@@ -26,9 +27,10 @@ class Messages(Base):
     user_id : Mapped[int] = mapped_column(ForeignKey("User.id"))
 
     msg : Mapped[str] = mapped_column(String(50))
-
-    msg_date : Mapped[str] = mapped_column() 
-
+    #the standart is utc from what I checked
+    msg_date : Mapped[datetime] = mapped_column(default=datetime.utcnow) 
+    
+    user_relation : Mapped['User'] = relationship(back_populates='messages_relation')
 class Auth(BaseModel):
     username : str = Field(max_length=10)
 
