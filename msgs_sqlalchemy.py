@@ -3,7 +3,8 @@ from sqlalchemy.orm import DeclarativeBase , Mapped , mapped_column , relationsh
 from pydantic import BaseModel , Field , ConfigDict
 from typing import Annotated
 from datetime import datetime
-engine = create_engine("postgresql+psycopg2://matan:matan123@localhost:5432/backend_stuff")
+from hiding import static_engine
+engine = create_engine(static_engine)
 Session = sessionmaker(bind = engine)
 
 #def hasher(pass : str) -> str:
