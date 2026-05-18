@@ -35,7 +35,9 @@ class ConnectionManager:
 #giving a var to the class
 app = FastAPI()
 manager = ConnectionManager()
-
+#auth method , checks if the username exists in the db already and if the password is correct.
+#if the username isnt in the db adds him there.
+#if the password is wrong just disconnects them
 async def auth_stuff(auth : Auth , session : AsyncSession) -> tuple[str,Users_orm]:
     username_notdb = auth.username
     password_notdb = auth.password
@@ -53,7 +55,11 @@ async def auth_stuff(auth : Auth , session : AsyncSession) -> tuple[str,Users_or
         return f'connected' , user
     else:
         raise ValueError('wrong password')
-    
+#websocket logic of the whole thing ,first we add a websocket object to the class(manager) , we dont create a full object yet , then we start the auth proccess by parsing the string with the get_string method in the sqlalchemy file , then we open a connection to the db and call the auth method.
+#then we have a lil check if the user connected from another place , if he is , we disconnect them.
+#now we fully create an object in the manager class.
+#now we start the "streaming" proccess of all the msgs flowing and broadcasting them , we recieve the a string from the user , check if its not too long
+#if its not , we send it to the db and then broadcast it to everyone.
 @app.websocket("/ws")
 async def websocket_server(websocket : WebSocket) -> None:
     await manager.first_entry(websocket)
