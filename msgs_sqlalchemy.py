@@ -11,26 +11,25 @@ Session = sessionmaker(bind = engine)
 class Base(DeclarativeBase):
     pass
 
-class User(Base):
-    __tablename__ = 'User'
+class Users_orm(Base):
+    __tablename__ = 'Users'
     id : Mapped[int] = mapped_column(autoincrement = True , primary_key = True)
     username : Mapped[str] = mapped_column(String(10) , nullable = False)
 
     password : Mapped[str] = mapped_column(String(10) , nullable = False)
 
-    messages_relation : Mapped[list['Messages']] = relationship(back_populates = 
-    'user_relation')
-class Messages(Base):
+    Messages_relation : Mapped["Messages_orm"] = relationship(back_populates = "User_relation")
+class Messages_orm(Base):
     __tablename__ = 'Messages'
 
     msg_id : Mapped[int] = mapped_column(autoincrement = True , primary_key=True)
-    user_id : Mapped[int] = mapped_column(ForeignKey("User.id"))
+    user_id : Mapped[int] = mapped_column(ForeignKey("Users.id"))
 
     msg : Mapped[str] = mapped_column(String(50))
     #the standart is utc from what I checked
     msg_date : Mapped[datetime] = mapped_column(default=datetime.utcnow) 
     
-    user_relation : Mapped['User'] = relationship(back_populates='messages_relation')
+    User_relation : Mapped["Users_orm"] = relationship(back_populates="Messages_relation")
 class Auth(BaseModel):
     username : str = Field(max_length=10)
 

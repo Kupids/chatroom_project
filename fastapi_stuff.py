@@ -2,7 +2,7 @@ from fastapi import FastAPI , Depends , WebSocket , WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession , create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select
-from msgs_sqlalchemy import Auth , User , Messages
+from msgs_sqlalchemy import Auth , Users_orm , Messages_orm
 from pydantic import ValidationError
 from typing import Dict
 engine = create_async_engine(async_engine)
@@ -35,15 +35,15 @@ class ConnectionManager:
 app = FastAPI()
 manager = ConnectionManager()
 
-async def auth_stuff(auth : Auth , session : AsyncSession) -> tuple[str,User]:
+async def auth_stuff(auth : Auth , session : AsyncSession) -> tuple[str,Users_orm]:
     username_notdb = auth.username
     password_notdb = auth.password
-    statement = select(User).where(User.username == username_notdb)
+    statement = select(Users_orm).where(Users_orm.username == username_notdb)
     result = await session.execute(statement)
     user = result.scalars().first()
 
     if user is None:
-        new_user = User(username=username_notdb , password=password_notdb)
+        new_user = Users_orm(username=username_notdb , password=password_notdb)
         session.add(new_user)
         await session.commit()
         await session.refresh(new_user)
@@ -86,7 +86,7 @@ async def websocket_server(websocket : WebSocket) -> None:
                 await websocket.send_text("msg too long (max 50)")
                 continue
             async with async_session() as session:
-                new_msg = Messages(user_id=current_user.id , msg=msg_notdb)
+                new_msg = Messages_orm(user_id=current_user.id , msg=msg_notdb)
                 session.add(new_msg)
                 await session.commit()
             await manager.broadcast(f'{username}: {msg_notdb}')
