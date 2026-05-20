@@ -27,8 +27,11 @@ the client sends his info(if you wanna know how the proccess of auth happens jus
 after hes connected an "async loop" starts running that allows him to send/recieve msgs , and everytime someone sends a msg its sent into the db aswell.
 
 # yap sesh
-the project isnt neceserly hard or complicated its just the first "big" thing Ive built
+the project isnt neceserly hard or complicated its just the first "big" thing Ive built.
 the reason I built it was purely for learning , I got intrested in async programming and databases and tried to think of a project that could help me learn that , further more this project was kinda my introduction to APIs.
 
 NO AI WAS USED FOR WRITING THE CODE , I had to learn this by myself through reading docs/viewing others people projects/and just trying to understand it myself , Ive provided notes for everything in my notes repo if someone is in need of them.
 
+# THE POSTGRESQL STRING IN COMMITS
+
+dont worry I changed the password
