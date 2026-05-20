@@ -10,7 +10,7 @@ async def get_msg(websocket) -> None:
         print("dced")
 
 async def send_msg(websocket):
-    print("holy shit it worked")
+    print("connected!")
     while True:
         loop = asyncio.get_event_loop()
         msg = await loop.run_in_executor(None , input , "send msg: ")
@@ -26,7 +26,7 @@ async def main():
         async with websockets.connect(f'ws://{ip}:8000/ws') as websocket:
             server_msg = await websocket.recv()
             print(f'SERVER: {server_msg}')
-            auth_msg = str(input("send your username/password in this format= username:password (for example matan:2025pass) please dont fuck up"))
+            auth_msg = str(input("send your username/password in this format= username:password (for example matan:2025pass):"))
             await websocket.send(auth_msg)
             server_respons = await websocket.recv()
             print(f'SERVER: {server_respons}')
