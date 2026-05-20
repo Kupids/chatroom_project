@@ -21,7 +21,7 @@ async def send_msg(websocket):
             except websockets.exceptions.ConnectionClosed:
                 break
 async def main():
-    ip = str(input("enter the ip address please dont fuck up"))
+    ip = str(input("enter the ip address please dont fuck up:"))
     try:
         async with websockets.connect(f'ws://{ip}:8000/ws') as websocket:
             server_msg = await websocket.recv()
