@@ -17,7 +17,7 @@ big "milestones" of the project:
 - using sync and async SQLAlchemy: used standard `create_engine` to handle server side table creation, but switched to `create_async_engine` and `AsyncSession` for the actual chat server so database calls doesnt block the WebSocket connections.
 - handling blocking I/O in asyncio: nn the client side, standard python `input()` blocks the whole code. I learned how to use `loop.run_in_executor` to change the user input to a separate thread so the client can still receive incoming messages while typing.
 - data validation: made text limits (like a max 50 char message limit) on both the pydantic model and the database schema layer.
-# IMPORTANT : no ai was used in this project , everything I did here I either learned from reading docs/viewing other people's projects/figuring stuff out by myself . you can find all the notes Ive made on sqlalchemy/fastapi in my notes repo
+### IMPORTANT : no ai was used in this project , everything I did here I either learned from reading docs/viewing other people's projects/figuring stuff out by myself . you can find all the notes Ive made on sqlalchemy/fastapi in my notes repo
 # How it works
 ### 1. Connection 
 The user runs `connection.py` and enters the host server's ip. the client attempts to open a WebSocket connection at the `/ws` endpoint, and the server accepts it onto the next phase.
