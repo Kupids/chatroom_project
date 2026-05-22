@@ -1,37 +1,47 @@
-# Real time chatroom backend
+## real-time Async chatroom
 
-project combines multiple python libraries to create a real time chatroom with authorazation and database which tracks the msgs.
-# tech stack used:
-- Database : PostgreSql
-- ORM : SqlAlchemy
-- for the API : FastAPI[websockets]
+real-time chatroom backend built to handle concurrent user connections, user authentication, and persistent message history. 
 
-# and other libraries which do play a role in this project but are not the "MAIN" course:
-- asyncio
-- websockets
-- typing
-- pydantic
-- datetime
+## Tech Stack
+- Database: PostgreSQL
+- ORM: SQLAlchemy 2.0 (Async/sync)
+-  Framework: FastAPI (WebSockets)
+-  Data Validation: Pydantic v2
 
-# REQS
-the way this works is quite simple , but there are a few requierments on the client's side:
--they should have the websockets library installed as its not in the psl.
--the client has to be in the same network as me for this to work.
+## What I learned building this
 
-# some explaining about the project
-im gonna yap abit about the flow of the project , wont go into to much depth:
-the client runs the connections.py file which asks him for an ip , I provide him my ip and he types it out , now the auth proccess begins.
-he connects to the server through websockets and receives a text which guides him on how to send his username and password.
-the client sends his info(if you wanna know how the proccess of auth happens just go look at the project if you wanna know the details) a db connection open and checks if hes even in the db , if hes not it just adds him with his password , if he is , it checks if the password is correct. if its not well he just disconnects
-.
-after hes connected an "async loop" starts running that allows him to send/recieve msgs , and everytime someone sends a msg its sent into the db aswell.
+the project isnt neceserly hard or complicated its just the first "big" thing Ive built. the reason I built it was purely for learning , I got interested in async programming and databases and tried to think of a project that could help me learn that , further more this project was kinda my introduction to APIs.
 
-# yap sesh
-the project isnt neceserly hard or complicated its just the first "big" thing Ive built.
-the reason I built it was purely for learning , I got intrested in async programming and databases and tried to think of a project that could help me learn that , further more this project was kinda my introduction to APIs.
+big "milestones" of the project:
+- managing connection states: made a `ConnectionManager` class to store active WebSocket connections in a dictionary, handle new logins, broadcast messages to everyone, and clean up when someone leaves.
+- using sync and async SQLAlchemy: used standard `create_engine` to handle server side table creation, but switched to `create_async_engine` and `AsyncSession` for the actual chat server so database calls doesnt block the WebSocket connections.
+- handling blocking I/O in asyncio: nn the client side, standard python `input()` blocks the whole code. I learned how to use `loop.run_in_executor` to change the user input to a separate thread so the client can still receive incoming messages while typing.
+- data validation: made text limits (like a max 50 char message limit) on both the pydantic model and the database schema layer.
 
-NO AI WAS USED FOR WRITING THE CODE , I had to learn this by myself through reading docs/viewing others people projects/and just trying to understand it myself , Ive provided notes for everything in my notes repo if someone is in need of them.
+## How it works
 
-# THE POSTGRESQL STRING IN COMMITS
+Here is exactly what happens from the moment a user connects to the room:
 
-dont worry I changed the password
+### 1. Connection 
+The user runs `connection.py` and enters the host server's ip. the client attempts to open a WebSocket connection at the `/ws` endpoint, and the server accepts it onto the next phase.
+
+### 2. The Auth Process
+before joining the chat, the server demands a login string as followed: `username:password`.
+- parsing: The server passes the string to a Pydantic func (`Auth.get_string`) which splits the input.
+- DB check: the server queries PostgreSQL using an async session which gets all the usernames/passwords from the db:
+  - new_user: If the username isnt found in the query, the server automatically registers them, inserts the credentials, and returns a `account created` string.
+  - existing_user: if the username exists, it checks the password. if its wrong,it throws an error and disconnects them.
+-check for multiple connections: if the username is already active in the server's connection dict, the server straight up closes the sockets so there wont be double logins.
+
+### 3. The chat loop
+if the auth proccess finishes smoothly, the user is added to the active connections list. the client uses `asyncio.gather` to run two loops at the same time:
+- incoming: listens for broadcasts from the server and prints them to the terminal.
+- outgoing: waits for user to type a new msg. when a msg is typed, the server checks its under 50 chars,inserts it to the PostgreSQL `Messages` table with a UTC timezone, and broadcasts it as (`username: message`) to everyone in the room.
+
+### 4. Disconnect
+If a user closes their terminal or loses connection, the server catches the `WebSocketDisconnect` exception, deletes their socket from the active dict, and broadcasts a message to the room letting everyone know that user left.
+
+## Requirements
+
+- The client requires a third party library called : `websockets` library installed.
+- gotta be in the same network
