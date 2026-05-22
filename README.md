@@ -1,6 +1,6 @@
 ## real-time Async chatroom
 
-real-time chatroom backend built to handle concurrent user connections, user authentication, and persistent message history. 
+real-time chatroom backend built to handle concurrent user connections, user auth , and message history. 
 
 ## Tech Stack
 - Database: PostgreSQL
@@ -10,14 +10,14 @@ real-time chatroom backend built to handle concurrent user connections, user aut
 
 ## What I learned building this
 
-the project isnt neceserly hard or complicated its just the first "big" thing Ive built. the reason I built it was purely for learning , I got interested in async programming and databases and tried to think of a project that could help me learn that , further more this project was kinda my introduction to APIs.
+the project isnt necessarily hard or complicated its just the first "big" thing Ive built. the reason I built it was purely for learning , I got interested in async programming and databases and tried to think of a project that could help me learn that , further more this project was kinda my introduction to APIs.
 
 big "milestones" of the project:
 - managing connection states: made a `ConnectionManager` class to store active WebSocket connections in a dictionary, handle new logins, broadcast messages to everyone, and clean up when someone leaves.
 - using sync and async SQLAlchemy: used standard `create_engine` to handle server side table creation, but switched to `create_async_engine` and `AsyncSession` for the actual chat server so database calls doesnt block the WebSocket connections.
 - handling blocking I/O in asyncio: nn the client side, standard python `input()` blocks the whole code. I learned how to use `loop.run_in_executor` to change the user input to a separate thread so the client can still receive incoming messages while typing.
 - data validation: made text limits (like a max 50 char message limit) on both the pydantic model and the database schema layer.
-## IMPORTANT : no ai was used in this project , everything I did here either learned from reading docs/viewing other people's projects/figuring stuff out by myself . you can find all the notes Ive made on sqlalchemy/fastapi in my notes repo
+# IMPORTANT : no ai was used in this project , everything I did here I either learned from reading docs/viewing other people's projects/figuring stuff out by myself . you can find all the notes Ive made on sqlalchemy/fastapi in my notes repo
 # How it works
 ### 1. Connection 
 The user runs `connection.py` and enters the host server's ip. the client attempts to open a WebSocket connection at the `/ws` endpoint, and the server accepts it onto the next phase.
