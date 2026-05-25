@@ -5,8 +5,8 @@ real-time chatroom backend built to handle concurrent user connections, user aut
 ## Tech Stack
 - Database: PostgreSQL
 - ORM: SQLAlchemy 2.0 (Async/sync)
--  Framework: FastAPI (WebSockets)
--  Data Validation: Pydantic v2
+- Framework: FastAPI (WebSockets)
+- Data Validation: Pydantic v2
 
 ## What I learned building this
 
@@ -42,3 +42,8 @@ If a user closes their terminal or loses connection, the server catches the `Web
 
 - The client requires a third party library called : `websockets` library installed.
 - gotta be in the same network
+
+
+### stuff thats missing
+- docker file and containers so people can use this without being in the same network
+- theres no encryption for the password gotta fix that

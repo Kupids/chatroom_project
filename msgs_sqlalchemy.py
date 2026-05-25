@@ -8,6 +8,7 @@ engine = create_engine(static_engine)
 Session = sessionmaker(bind = engine)
 
 #def hasher(pass : str) -> str:
+
     
 class Base(DeclarativeBase):
     pass
